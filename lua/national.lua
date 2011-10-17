@@ -90,6 +90,8 @@ function AjouterNom(t)
 	local val = io.read()
 	local id1,id2 = val:match("(%d%d)%.?(%d%d)")
 	if id1 then return Ajoute(t, id1, id2) end
+	local list = select_list("SELECT nom||' '||prenom from candidats WHERE nom LIKE '%s'", val)
+	for i=1,#list do print(list[i]) end
 end	
 	
 local menu_bulletin = 
