@@ -36,6 +36,8 @@ local function select_list(sql, ...)
 	return t
 end
 local function EntreeNombre(min,max)
+	if min==max then return min end
+	assert(max > min, "Choix impossible")
 	while true do
 		local n = tonumber(io.read())
 		if n and n>=min and n <= max then return n end
@@ -90,8 +92,14 @@ function AjouterNom(t)
 	local val = io.read()
 	local id1,id2 = val:match("(%d%d)%.?(%d%d)")
 	if id1 then return Ajoute(t, id1, id2) end
-	local list = select_list("SELECT nom||' '||prenom from candidats WHERE nom LIKE '%s'", val)
-	for i=1,#list do print(list[i]) end
+	local trouve={}
+	for liste, numero, nom, prenom in db:urows("SELECT * from candidats WHERE nom LIKE '"..val.."%%'") do
+		local str = string.format("%02d.%02d  %s %s", liste, numero, nom, prenom)
+		trouve[#trouve+1] = str
+	end
+	assert(#trouve > 0, "Aucun candidat trouvé")
+	assert(#trouve < 25, "Trop de candidats trouvés")
+	Ajoute(t, trouve[Menu(trouve)]:match("(%d%d)%.(%d%d)"))
 end	
 	
 local menu_bulletin = 
