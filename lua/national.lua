@@ -146,11 +146,36 @@ function BulletinModifie()
 	end
 end
 
+function Statistiques()
+	local cnt = {}
+	for liste, nombre in db:urows("SELECT * from votes_compacts") do
+		cnt[liste] = nombre*max_candidats
+	end
+	for liste, vides in db:urows("SELECT * from votes_modifies") do
+		cnt[liste] = cnt[liste] + vides
+	end
+	for liste in db:urows("SELECT liste from suffrages") do
+		cnt[liste] = cnt[liste] + 1
+	end
+	local total = 0
+	for i=1,#cnt do
+		total = total + cnt[i]
+		cnt[i] = {i, cnt[i]}
+	end
+	table.sort(cnt, function(a,b) return a[2]>b[2] end)
+	for i=1,#cnt do
+		printf("%5d %5.2f%% - %02d %-40s", cnt[i][2], cnt[i][2]/total*100, cnt[i][1], listes[cnt[i][1]])
+	end
+	print 'Pressez la touche entrée'
+	io.read()
+end
+
 local menu_principal = 
 { 
 	{ 'Choix de la liste courante',  function()	liste_courante = Menu(listes) end},
 	{ "Introduction d'un lot de bulletins compacts", VotesCompact },
 	{ "Introduction d'un bulletin modifié", BulletinModifie}, 
+	{ "Affichage statistiques", Statistiques },
 	{ "Quitter", os.exit} 
 }
 
