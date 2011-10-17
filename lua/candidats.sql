@@ -1,6 +1,7 @@
 begin transaction;
 create table listes(numero, nom);
 create table candidats(liste, numero, nom, prenom);
+create table votes_compacts(liste, nombre);
 insert into listes values(01, 'La Gauche - solidaritéS');
 insert into candidats values(01, 01, 'DOLIVO', 'Jean-Michel');
 insert into candidats values(01, 02, 'PAPILLOUD', 'Anne');
@@ -357,5 +358,7 @@ insert into candidats values(22, 15, 'THÉVOZ', 'Olivier');
 insert into candidats values(22, 16, 'WUERSCH', 'Maxim');
 insert into candidats values(22, 17, 'YOAKIM', 'William');
 insert into candidats values(22, 18, 'ZWICKY', 'Cédric');
+
 insert into listes values(23, 'Sans dénomination');
+insert into votes_compacts select numero, 0 from listes;
 commit;
