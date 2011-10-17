@@ -101,14 +101,26 @@ function AjouterNom(t)
 	assert(#trouve < 25, "Trop de candidats trouvés")
 	Ajoute(t, trouve[Menu(trouve)]:match("(%d%d)%.(%d%d)"))
 end	
-	
+
+function Valider(t)
+	local res = db:exec(("BEGIN; INSERT INTO votes_modifies(liste,vides) VALUES(%d,%d); "):format(t[0], max_candidats-#t))
+	assert(res==0, "Error à l'enregistrement")
+	local id = db:last_insert_rowid()
+	for i=1,#t do 
+		res = db:exec(("INSERT INTO suffrages VALUES(%d,%d,%d)"):format(id, t[i]:match("(%d%d)%.(%d%d)")))
+		assert(res==0, "Error à l'enregistrement")
+	end
+	db:exec("COMMIT");
+	return true
+end
+
 local menu_bulletin = 
 {
 	{ "Ajouter un nom", AjouterNom },
 	{ "Supprimer une ligne", function(t) table.remove(t, EntreeNombre(1, #t)) end },
 	{ "Tout supprimer", function(t) for i=1,#t do t[i]=nil end end },
 	{ "Annuler saisie", function() return true end },
-	{ "Valider", function() return true end },
+	{ "Valider", Valider },
 }
 
 function BulletinModifie()
