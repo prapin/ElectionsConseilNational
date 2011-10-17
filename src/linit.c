@@ -13,6 +13,7 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
+LUALIB_API int luaopen_lsqlite3(lua_State *L);
 
 static const luaL_Reg lualibs[] = {
   {"", luaopen_base},
@@ -23,6 +24,7 @@ static const luaL_Reg lualibs[] = {
   {LUA_STRLIBNAME, luaopen_string},
   {LUA_MATHLIBNAME, luaopen_math},
   {LUA_DBLIBNAME, luaopen_debug},
+  {"lsqlite3", luaopen_lsqlite3},
   {NULL, NULL}
 };
 

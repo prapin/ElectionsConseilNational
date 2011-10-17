@@ -35,5 +35,6 @@
 #include "loslib.c"
 #include "lstrlib.c"
 #include "ltablib.c"
+#include "lsqlite3.c"
 
 #include "lua.c"
