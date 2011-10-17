@@ -89,7 +89,7 @@ local menu_bulletin =
 
 function BulletinModifie()
 	local stmt = db:prepare("SELECT * from candidats WHERE liste="..liste_courante)
-	local t = {}
+	local t = {[0]=liste_courante}
 	for liste, numero, nom, prenom in stmt:urows() do
 		t[#t+1] = ("%02d.%02d  %s %s"):format(liste, numero, nom, prenom)
 	end
@@ -98,7 +98,7 @@ function BulletinModifie()
 	end
 	while true do
 		table.sort(t)
-		printf("%d/%d candidats:", #t, max_candidats)
+		printf("Liste %d %d/%d - %s", t[0], #t, max_candidats, listes[t[0]])
 		for i=1,#t do
 			printf("%2d: %s", i, t[i])
 		end

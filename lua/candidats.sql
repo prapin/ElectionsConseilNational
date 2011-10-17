@@ -2,6 +2,8 @@ begin transaction;
 create table listes(numero, nom);
 create table candidats(liste, numero, nom, prenom);
 create table votes_compacts(liste, nombre);
+create table votes_modifies(liste, id primary key autoincrement);
+create table suffrages(bulletin, liste, numero);
 insert into listes values(01, 'La Gauche - solidaritéS');
 insert into candidats values(01, 01, 'DOLIVO', 'Jean-Michel');
 insert into candidats values(01, 02, 'PAPILLOUD', 'Anne');
