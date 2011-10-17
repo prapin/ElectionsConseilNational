@@ -9,6 +9,17 @@ if db:exec("SELECT * from listes;") > 0 then
 	end
 end
 
+if not _print then _print = print end
+function print(...)
+	local t = {}
+	for i=1,select('#',...) do
+		t[i] = tostring(select(i, ...))
+	end
+	t = table.concat(t, "\t").."\n"
+	for s in t:gmatch("([^\n]*)\n") do
+		_print(s)
+	end
+end
 function printf(...)
 	print(string.format(...))
 end
@@ -36,8 +47,15 @@ local listes = select_list("SELECT nom from listes ORDER BY numero")
 local liste_courante = 1
 local max_candidats = 18
 
+function Clear()
+   if false then -- os.getenv("OSTYPE") then
+       os.execute("cls")
+   else
+		io.write "\27[H\27[2J"
+   end
+end
+
 function Menu(liste)
--- 	io.write "\27[H\27[2J"
 	for k,v in pairs(liste) do
 		printf("%2d. %s", k, type(v) == 'table' and v[1] or v)
 	end
@@ -46,35 +64,31 @@ function Menu(liste)
 end
 
 function VotesCompact()
+	assert(liste_courante~=#listes, "Pas de vote compact sans dénomination de parti")
 	local nb = select_single("SELECT nombre FROM votes_compacts WHERE liste=%d", liste_courante)
-	printf("La liste %d '%s'\na actuellement %d votes compacts\nIntroduisez le nombre de votes à ajouter :", liste_courante, listes[liste_courante], nb)
-	local res = nb+EntreeNombre(0, 1000)
-	db:exec('UPDATE votes_compacts SET nombre='..res)
+	printf("La liste %d '%s'\na actuellement %d votes compacts\nIntroduisez le nombre de votes à ajouter (0 pour annuler) :", liste_courante, listes[liste_courante], nb)
+	local res = nb+EntreeNombre(-1000, 1000)
+	assert(res>=0, "Vous avez supprimé trop de bulletins")
+	db:exec(('UPDATE votes_compacts SET nombre=%d WHERE liste=%d'):format(res, liste_courante))
 end
 
 local function Ajoute(t, id_liste, id_cand)
 	local nom = select_single("SELECT nom||' '||prenom from candidats WHERE liste=%d and numero=%d", id_liste, id_cand)
-	if not nom then
-		return printf("Pas de candidat numéro %02d.%02d", id_liste, id_cand)
-	end
+	assert(nom, ("Pas de candidat numéro %02d.%02d"):format(id_liste, id_cand))
 	local str = string.format("%02d.%02d  %s", id_liste, id_cand, nom)
 	local c = {}
 	for i=1,#t do 
 		c[t[i]] = (c[t[i]] or 0) + 1
 	end
-	if c[str] and c[str] > 1 then
-		return printf("Ce candidat est déjà deux fois sur le bulletin")
-	end
+	assert(c[str]==nil or c[str]==1, "Ce candidat est déjà deux fois sur le bulletin")
 	t[#t+1] = str
 end
 
 function AjouterNom(t)
-	if #t >= max_candidats then 
-		return printf("Déjà %d candidats. Supprimez-en d'abord", #t)
-	end
+	assert(#t<max_candidats, ("Déjà %d candidats. Supprimez-en d'abord"):format(#t))
 	print "Entrer numéro ou partie du nom"
 	local val = io.read()
-	local id1,id2 = val:match("(%d%d)%.(%d%d)")
+	local id1,id2 = val:match("(%d%d)%.?(%d%d)")
 	if id1 then return Ajoute(t, id1, id2) end
 end	
 	
@@ -102,18 +116,24 @@ function BulletinModifie()
 		for i=1,#t do
 			printf("%2d: %s", i, t[i])
 		end
-		if Menu(menu_bulletin)(t) then return end
+		print ''
+		local ok, res = pcall(Menu(menu_bulletin), t)
+		Clear()
+		if not ok then printf("** %s **", res:gsub(".-%:","")) end
+		if ok and res then return end
 	end
 end
 
 local menu_principal = 
 { 
 	{ 'Choix de la liste courante',  function()	liste_courante = Menu(listes) end},
-	{ "Introduction d'un lot de bulletins compacts", VotesCompact },
+	{ "Introduction d'un lot de bulletins compacts", VotesCompact },
 	{ "Introduction d'un bulletin modifié", BulletinModifie}, 
 	{ "Quitter", os.exit} 
 }
 
 while true do -- Menu principal
-	Menu(menu_principal)()
+	local ok, res = pcall(Menu(menu_principal))
+	Clear()
+	if not ok then printf("** %s **", res:gsub(".-%:","")) end
 end
