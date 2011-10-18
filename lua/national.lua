@@ -2,12 +2,6 @@
 -- prévu surtout pour les élections du 23 octobre dans le canton de Vaud.
  
 local db = sqlite3.open('national.db')
-if db:exec("SELECT * from listes;") > 0 then
-	print "Réinitialisation de la base de données!"
-	for s in io.lines("candidats.sql") do
-		db:exec(s)
-	end
-end
 
 if not _print then _print = print end
 function print(...)
@@ -45,17 +39,16 @@ local function EntreeNombre(min,max)
 	end
 end
 
+if db:exec("SELECT * from listes;") > 0 then
+	print "Réinitialisation de la base de données!"
+	for s in io.lines("candidats.sql") do
+		db:exec(s)
+	end
+end
+
 local listes = select_list("SELECT nom from listes ORDER BY numero")
 local liste_courante = 1
 local max_candidats = 18
-
-function Clear()
-   if false then -- os.getenv("OSTYPE") then
-       os.execute("cls")
-   else
-		io.write "\27[H\27[2J"
-   end
-end
 
 function Menu(liste)
 	for k,v in pairs(liste) do
@@ -140,7 +133,7 @@ function BulletinModifie()
 		end
 		print ''
 		local ok, res = pcall(Menu(menu_bulletin), t)
-		Clear()
+		clear()
 		if not ok then printf("** %s **", res:gsub(".-%:","")) end
 		if ok and res then return end
 	end
@@ -181,6 +174,6 @@ local menu_principal =
 
 while true do -- Menu principal
 	local ok, res = pcall(Menu(menu_principal))
-	Clear()
+	clear()
 	if not ok then printf("** %s **", res:gsub(".-%:","")) end
 end

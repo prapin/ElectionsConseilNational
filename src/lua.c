@@ -16,8 +16,9 @@
 
 #include "lauxlib.h"
 #include "lualib.h"
-
-
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 static lua_State *globalL = NULL;
 
@@ -336,6 +337,42 @@ struct Smain {
   int status;
 };
 
+#ifdef _WIN32
+static int utf8_print(lua_State* L)
+{
+	size_t len, wlen, olen;
+	wchar_t* wstr;
+	const char* str = luaL_checklstring(L, 1, &len);
+	char* ostr;
+	wlen = len+1;
+	wstr = (wchar_t*)lua_newuserdata(L, wlen*sizeof(wchar_t));
+	wlen = MultiByteToWideChar(CP_UTF8, 0, str, len, wstr, wlen);
+	olen = len+1;
+	ostr = (char*)lua_newuserdata(L, olen*sizeof(char));
+	olen = WideCharToMultiByte(CP_OEMCP, 0, wstr, wlen, ostr, olen, NULL, NULL);
+	ostr[olen]=0;
+	printf("%s\n", ostr);
+	return 0;
+}
+#endif
+
+static int clear_console(lua_State* L)
+{
+#ifdef _WIN32
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD coord = {0, 0};
+    DWORD count;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(hStdOut, &csbi);
+    FillConsoleOutputCharacter(hStdOut, ' ',
+                               csbi.dwSize.X * csbi.dwSize.Y,
+                               coord, &count);
+    SetConsoleCursorPosition(hStdOut, coord);
+#else
+	puts("\x1B[H\x1B[2J");
+#endif
+	return 0;
+}
 
 static int pmain (lua_State *L) {
   struct Smain *s = (struct Smain *)lua_touserdata(L, 1);
@@ -346,6 +383,12 @@ static int pmain (lua_State *L) {
   if (argv[0] && argv[0][0]) progname = argv[0];
   lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
   luaL_openlibs(L);  /* open libraries */
+#ifdef _WIN32
+  lua_pushcfunction(L, utf8_print);
+  lua_setglobal(L, "_print");
+#endif
+  lua_pushcfunction(L, clear_console);
+  lua_setglobal(L, "clear");
   lua_gc(L, LUA_GCRESTART, 0);
   s->status = handle_luainit(L);
   if (s->status != 0) return 0;
