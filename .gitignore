@@ -1,4 +1,6 @@
 *.o
+*.obj
 *.bak
 *.exe
 national.db
+README.html
