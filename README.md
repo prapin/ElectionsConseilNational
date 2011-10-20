@@ -23,7 +23,7 @@ Installation et usage
 * Extraire les trois fichiers dans un répertoire où l'utilisateur courant a les droits en lecture et écriture;
 * Lancer l'exécutable nommé `national.exe`
 * Suivre les menus en ligne de commande... En général, il faut entrer des chiffres et presser _Entrée_.
-* Quitter le programme avec `F5`
+* Quitter le programme avec `5`
 * Envoyer (??) le fichier `national.db` au service informatique du canton (?!?)
 
 Partie technique
@@ -41,3 +41,8 @@ Le source de l'application elle-même se trouve dans le répertoire `lua`, nomm�
 La première fois, il crée le fichier de base de données, `national.db`, en prenant des commandes SQL 
 du fichier `candidats.sql` pour l'initialisation. 
 
+Licences
+--------
+
+* Lua, lsqlite3 et le corps du programme sont sous licence MIT.
+* SQlite3 est dans le domaine public

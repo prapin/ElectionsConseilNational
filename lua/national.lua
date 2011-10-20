@@ -1,6 +1,37 @@
--- Programme d'introduction des votes pour le Conseil National,
--- prévu surtout pour les élections du 23 octobre dans le canton de Vaud.
- 
+--[[ 
+Programme d'introduction des votes pour le Conseil National,
+prévu surtout pour les élections du 23 octobre 2011 dans le canton de Vaud.
+
+La licence est de type MIT. C'est-à-dire:
+Français: Vous pouvez faire ce que bon vous semble avec le programme, sous votre 
+          propre responsabilité, sauf prétendre que vous en êtes l'auteur.
+
+Legaleese:
+===============================================================================
+
+Copyright (C) 2011 Olivetti Engineering SA, CH-1400 Yverdon-les-Bains
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+===============================================================================
+]]
+
 local db = sqlite3.open('national.db')
 
 if not _print then _print = print end
