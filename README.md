@@ -16,12 +16,21 @@ du scrutin du 23 octobre.
 _Le service informatique du canton, que j'ai essayé de contacter, n'a pas donné son
 accord formel. En aucun cas ce logiciel ne saurait remplacer le Procès Verbal de Commune à faire par écrit._
 
-Installation et usage
----------------------
+Installation
+------------
+
+Pour Windows:
 
 * Télécharger le fichier `ElectionsConseilNational.0.1.zip` depuis le menu `Downloads`;
 * Extraire les trois fichiers dans un répertoire où l'utilisateur courant a les droits en lecture et écriture;
+
+Sous Linux ou MacOS, veuillez recompiler le logiciel comme expliqué au chapitre technique.
+
+Usage
+-----
+
 * Lancer l'exécutable nommé `national.exe`
+* Augmenter la taille de la fenêtre de texte, pour pouvoir voir tous les noms des candidats et listes.
 * Suivre les menus en ligne de commande... En général, il faut entrer des chiffres et presser _Entrée_.
 * Quitter le programme avec `5`
 * Envoyer (??) le fichier `national.db` au service informatique du canton (?!?)

@@ -126,12 +126,13 @@ function AjouterNom(t)
 	Ajoute(t, trouve[Menu(trouve)]:match("(%d%d)%.(%d%d)"))
 end	
 
+local current_bulletin
 function Valider(t)
-	local res = db:exec(("BEGIN; INSERT INTO votes_modifies(liste,vides) VALUES(%d,%d); "):format(t[0], max_candidats-#t))
+	assert(#t > 0, "Au moins un candidat doit être sur la liste")
+	local res = db:exec(("UPDATE votes_modifies SET liste=%d, vides=%d WHERE id_bull='%s';"):format(t[0], max_candidats-#t, current_bulletin))
 	assert(res==0, "Error à l'enregistrement")
-	local id = db:last_insert_rowid()
 	for i=1,#t do 
-		res = db:exec(("INSERT INTO suffrages VALUES(%d,%d,%d)"):format(id, t[i]:match("(%d%d)%.(%d%d)")))
+		res = db:exec(("INSERT INTO suffrages VALUES('%s',%d,%d)"):format(current_bulletin, t[i]:match("(%d%d)%.(%d%d)")))
 		assert(res==0, "Error à l'enregistrement")
 	end
 	db:exec("COMMIT");
@@ -148,6 +149,9 @@ local menu_bulletin =
 }
 
 function BulletinModifie()
+	print "Entrer un identifiant unique pour le bulletin"
+	current_bulletin = io.read()
+	assert(db:exec(("BEGIN; INSERT INTO votes_modifies(id_bull) VALUES('%s')"):format(current_bulletin))==0, "L'identifiant de bulletin existe déjà")
 	local stmt = db:prepare("SELECT * from candidats WHERE liste="..liste_courante)
 	local t = {[0]=liste_courante}
 	for liste, numero, nom, prenom in stmt:urows() do
@@ -194,17 +198,33 @@ function Statistiques()
 	io.read()
 end
 
+function Rapport()
+	local cnt = {}
+	for liste, nombre in db:urows("SELECT * from votes_compacts") do
+		cnt[liste] = { compacts = nombre, modifies=0 }
+	end
+	for liste, vides in db:urows("SELECT * from votes_modifies") do
+		cnt[liste].modifies = cnt[liste].modifies + 1
+	end
+	for liste in db:urows("SELECT liste from suffrages") do
+		cnt[liste] = cnt[liste] + 1
+	end
+	
+end
+
 local menu_principal = 
 { 
 	{ 'Choix de la liste courante',  function()	liste_courante = Menu(listes) end},
 	{ "Introduction d'un lot de bulletins compacts", VotesCompact },
 	{ "Introduction d'un bulletin modifié", BulletinModifie}, 
 	{ "Affichage statistiques", Statistiques },
+	{ "Exporter le rapport", Rapport },
 	{ "Quitter", os.exit} 
 }
 
 while true do -- Menu principal
 	local ok, res = pcall(Menu(menu_principal))
 	clear()
-	if not ok then printf("** %s **", res:gsub(".-%:","")) end
+	if not ok then printf("** %s **", res:gsub(".-%:","")) print(db:errmsg()) end
+	db:exec("ROLLBACK")
 end
