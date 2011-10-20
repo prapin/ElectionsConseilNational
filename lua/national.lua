@@ -151,6 +151,7 @@ local menu_bulletin =
 function BulletinModifie()
 	print "Entrer un identifiant unique pour le bulletin"
 	current_bulletin = io.read()
+	assert(current_bulletin ~= "", "Identifiant de bulletin invalide")
 	assert(db:exec(("BEGIN; INSERT INTO votes_modifies(id_bull) VALUES('%s')"):format(current_bulletin))==0, "L'identifiant de bulletin existe déjà")
 	local stmt = db:prepare("SELECT * from candidats WHERE liste="..liste_courante)
 	local t = {[0]=liste_courante}
@@ -206,10 +207,41 @@ function Rapport()
 	for liste, vides in db:urows("SELECT * from votes_modifies") do
 		cnt[liste].modifies = cnt[liste].modifies + 1
 	end
-	for liste in db:urows("SELECT liste from suffrages") do
-		cnt[liste] = cnt[liste] + 1
+	for liste,parti,numero in db:urows("SELECT votes_modifies.liste,suffrages.liste,suffrages.numero from suffrages,votes_modifies WHERE votes_modifies.id_bull=suffrages.id_bull;") do
+		local c = cnt[liste]
+		c[parti] = (c[parti] or 0) + 1
+		local id = ("%02d.%02d"):format(parti, numero)
+		c[id] = (c[id] or 0) + 1
+	end
+	local candidats = {}
+	for liste, numero, nom, prenom in db:urows("SELECT * from candidats") do
+		candidats[#candidats+1] = {("%02d.%02d"):format(liste,numero), ("%s %s"):format(nom, prenom)}
 	end
 	
+	local f=assert(io.open('national.csv', 'w'), "Impossible d'ouvrir le fichier de rapport")
+	local function outf(...)
+		f:write(string.format(...))
+	end
+	outf(',"Numéro de liste"')
+	for i=1,#cnt do outf(',%d', i) end
+	outf('\n,"Nom de liste"')
+	for i=1,#cnt do outf(',"%s"', listes[i]) end
+	outf('\n\n"Bulletins compacts",')
+	for i=1,#cnt do outf(',%d', cnt[i].compacts) end
+	outf('\n"Bulletins modifiés",')
+	for i=1,#cnt do outf(',%d', cnt[i].modifies) end
+	outf('\n\n"Numéro","Parti"')
+	for i=1,#cnt do 
+		outf('\n%d,"%s"', i, listes[i])
+		for j=1,#cnt do outf(',%d', cnt[j][i] or 0) end
+	end
+	outf('\n\n"Numéro","Candidat"')
+	for i=1,#candidats do 
+		outf('\n"%s","%s"', candidats[i][1], candidats[i][2])
+		for j=1,#cnt do outf(',%d', cnt[j][candidats[i][1]] or 0) end
+	end
+	
+	f:close()
 end
 
 local menu_principal = 
@@ -224,7 +256,7 @@ local menu_principal =
 
 while true do -- Menu principal
 	local ok, res = pcall(Menu(menu_principal))
-	clear()
+	-- clear()
 	if not ok then printf("** %s **", res:gsub(".-%:","")) print(db:errmsg()) end
 	db:exec("ROLLBACK")
 end
