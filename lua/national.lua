@@ -130,10 +130,10 @@ local current_bulletin
 function Valider(t)
 	assert(#t > 0, "Au moins un candidat doit être sur la liste")
 	local res = db:exec(("UPDATE votes_modifies SET liste=%d, vides=%d WHERE id_bull='%s';"):format(t[0], max_candidats-#t, current_bulletin))
-	assert(res==0, "Error à l'enregistrement")
+	assert(res==0, "Erreur à l'enregistrement")
 	for i=1,#t do 
 		res = db:exec(("INSERT INTO suffrages VALUES('%s',%d,%d)"):format(current_bulletin, t[i]:match("(%d%d)%.(%d%d)")))
-		assert(res==0, "Error à l'enregistrement")
+		assert(res==0, "Erreur à l'enregistrement")
 	end
 	db:exec("COMMIT");
 	return true
@@ -147,6 +147,15 @@ local menu_bulletin =
 	{ "Annuler saisie", function() return true end },
 	{ "Valider", Valider },
 }
+
+local function AfficheBulletin(t)
+	table.sort(t)
+	printf("Liste %d %d/%d - %s", t[0], #t, max_candidats, listes[t[0]])
+	for i=1,#t do
+		printf("%2d: %s", i, t[i])
+	end
+	print ''
+end
 
 function BulletinModifie()
 	print "Entrer un identifiant unique pour le bulletin"
@@ -162,13 +171,44 @@ function BulletinModifie()
 		for i=1,#t do t[#t+1] = t[i] end
 	end
 	while true do
-		table.sort(t)
-		printf("Liste %d %d/%d - %s", t[0], #t, max_candidats, listes[t[0]])
-		for i=1,#t do
-			printf("%2d: %s", i, t[i])
-		end
-		print ''
+		AfficheBulletin(t)
 		local ok, res = pcall(Menu(menu_bulletin), t)
+		clear()
+		if not ok then printf("** %s **", res:gsub(".-%:","")) end
+		if ok and res then return end
+	end
+end
+
+function SupprimerBulletin(t)
+	assert(db:execute(("DELETE FROM votes_modifies WHERE id_bull = '%s';COMMIT"):format(current_bulletin)) == 0, "Erreur lors de l'effacement")
+	return true;
+end
+
+local menu_modif_bulletin = 
+{
+	{ "Ajouter un nom", AjouterNom },
+	{ "Supprimer une ligne", function(t) table.remove(t, EntreeNombre(1, #t)) end },
+	{ "Tout supprimer", function(t) for i=1,#t do t[i]=nil end end },
+	{ "Supprimer le bulletin", SupprimerBulletin },
+	{ "Annuler édition", function() return true end },
+	{ "Valider", Valider },
+}
+
+function EditionBulletin()
+	print "Entrer l'identifiant pour le bulletin"
+	current_bulletin = io.read()
+	local liste = select_single("SELECT liste FROM votes_modifies WHERE id_bull = '%s'", current_bulletin)
+	assert(liste, "L'identifiant de bulletin n'existe pas")
+	local t = {[0] = liste}
+	local sql = ("SELECT candidats.liste, candidats.numero, candidats.nom, candidats.prenom FROM suffrages,candidats WHERE id_bull = '%s' AND candidats.liste=suffrages.liste AND candidats.numero=suffrages.numero;"):format(current_bulletin);
+	for liste, numero, nom, prenom in db:urows(sql) do
+		t[#t+1] = ("%02d.%02d  %s %s"):format(liste, numero, nom, prenom)
+		print(t[#t])
+	end
+	print(db:exec(("BEGIN; DELETE FROM suffrages WHERE id_bull = '%s'"):format(current_bulletin)) )
+	while true do
+		AfficheBulletin(t)
+		local ok, res = pcall(Menu(menu_modif_bulletin), t)
 		clear()
 		if not ok then printf("** %s **", res:gsub(".-%:","")) end
 		if ok and res then return end
@@ -249,6 +289,7 @@ local menu_principal =
 	{ 'Choix de la liste courante',  function()	liste_courante = Menu(listes) end},
 	{ "Introduction d'un lot de bulletins compacts", VotesCompact },
 	{ "Introduction d'un bulletin modifié", BulletinModifie}, 
+	{ "Editer un bulletin modifié", EditionBulletin },
 	{ "Affichage statistiques", Statistiques },
 	{ "Exporter le rapport", Rapport },
 	{ "Quitter", os.exit} 
